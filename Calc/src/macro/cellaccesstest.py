@@ -34,34 +34,19 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 	return wrapper
 # @enableRemoteDebugging
 def macro():
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	doc = XSCRIPTCONTEXT.getDocument()
-	if not doc.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # Calcドキュメントに結果を出力するのでWriterドキュメントであることを確認する。
-		raise RuntimeError("Please execute this macro with a Writer document.")
-
-	
+	if not doc.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # Calcドキュメントであることを確認する。
+		raise RuntimeError("Please execute this macro with a Calc document.")
 	sheets = doc.getSheets()
 	sheet = sheets[0]
-	cellrange = sheet[:5,:2]
-	cellrange.clearContents(VALUE+DATETIME+STRING+ANNOTATION+FORMULA)
-	subrange = cellrange[1:5,:3]
-
+	cellrange = sheet[:5,:2]  # iからjへのスライスはi<=k<jとなるようなインデクスkを持つ要素。iは0から開始。
+	cellrange.clearContents(VALUE+DATETIME+STRING+ANNOTATION+FORMULA) 
 	cellrange[0,0].setString('みかん')
 	cellrange[0,1].setString('りんご')
-	subrange = cellrange[1:5,:3]
-	rangeAddress = subrange.RangeAddress
-	for i in range(rangeAddress.EndRow - rangeAddress.StartRow):
-		for j in range(rangeAddress.EndColumn - rangeAddress.StartColumn):
+	subrange = cellrange[1:5,:2]
+	for i in range(len(subrange.Rows)):
+		for j in range(len(subrange.Columns)):
 			subrange.getCellByPosition(j,i).setValue((i+1)*(j+2))	
-# 	subrange = cellrange.getCellRangeByPosition(0,1,2,5)
-# 	rangeAddress = subrange.RangeAddress
-# 	for i in range(rangeAddress.EndRow - rangeAddress.StartRow):
-# 		for j in range(rangeAddress.EndColumn - rangeAddress.StartColumn):
-# 			subrange.getCellByPosition(j,i).setValue((i+1)*(j+2))
-		
-		
-
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
