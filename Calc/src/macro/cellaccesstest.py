@@ -34,34 +34,15 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 	return wrapper
 # @enableRemoteDebugging
 def macro():
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	doc = XSCRIPTCONTEXT.getDocument()
-	if not doc.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # Calcドキュメントに結果を出力するのでWriterドキュメントであることを確認する。
-		raise RuntimeError("Please execute this macro with a Writer document.")
-
-	
-	sheets = doc.getSheets()
-	sheet = sheets[0]
-	cellrange = sheet[:5,:2]
-	cellrange.clearContents(VALUE+DATETIME+STRING+ANNOTATION+FORMULA)
-	subrange = cellrange[1:5,:3]
-
-	cellrange[0,0].setString('みかん')
-	cellrange[0,1].setString('りんご')
-	subrange = cellrange[1:5,:3]
-	rangeAddress = subrange.RangeAddress
-	for i in range(rangeAddress.EndRow - rangeAddress.StartRow):
-		for j in range(rangeAddress.EndColumn - rangeAddress.StartColumn):
-			subrange.getCellByPosition(j,i).setValue((i+1)*(j+2))	
-# 	subrange = cellrange.getCellRangeByPosition(0,1,2,5)
-# 	rangeAddress = subrange.RangeAddress
-# 	for i in range(rangeAddress.EndRow - rangeAddress.StartRow):
-# 		for j in range(rangeAddress.EndColumn - rangeAddress.StartColumn):
-# 			subrange.getCellByPosition(j,i).setValue((i+1)*(j+2))
-		
-		
-
+	if not doc.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # Calcドキュメントであることを確認する。
+		raise RuntimeError("Please execute this macro with a Calc document.")
+	sheets = doc.getSheets()  # ドキュメントからSpreadsheetsを取得。
+	sheet = sheets[0]  # Spreadsheetを取得。
+	sheet.clearContents(VALUE+DATETIME+STRING+ANNOTATION+FORMULA)  # シートの全内容をクリア。
+	sheet[0,:2].setDataArray((('みかん', 'りんご'),))  # 引数は行のセルを要素とするタプルのタプル。
+	cellrange = sheet[1:5,:2]  # SheetCellRangeを取得。
+	cellrange.setDataArray([[(i+1)*(j+2) for j in range(len(cellrange.getColumns()))] for i in range(len(cellrange.getRows()))])  # 引数はタプル以外にリストでもイテレータでもOKだが、シートの範囲と大きさと一致していないといけない。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
@@ -102,7 +83,7 @@ if __name__ == "__main__":  # オートメーションで実行するとき
 	XSCRIPTCONTEXT = main()  # XSCRIPTCONTEXTを取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 	if not hasattr(doc, "getCurrentController"):  # ドキュメント以外のとき。スタート画面も除外。
-		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/calc", "_blank", 0, ())  # Calcのドキュメントを開く。
+		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/scalc", "_blank", 0, ())  # Calcのドキュメントを開く。
 		while doc is None:  # ドキュメントのロード待ち。
 			doc = XSCRIPTCONTEXT.getDocument()
 	macro()
