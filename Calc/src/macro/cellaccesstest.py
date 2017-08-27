@@ -37,20 +37,12 @@ def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
 	if not doc.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # Calcドキュメントであることを確認する。
 		raise RuntimeError("Please execute this macro with a Calc document.")
-	sheets = doc.Sheets
-	sheet = sheets[0]
-	cellrange = sheet[:5,:2]  # iからjへのスライスはi<=k<jとなるようなインデクスkを持つ要素。iは0から開始。
-	cellrange.clearContents(VALUE+DATETIME+STRING+ANNOTATION+FORMULA) 
-	cellrange[0,0].String = 'みかん'
-	cellrange[0,1].String = 'りんご'
-	subrange = cellrange[1:5,:2]
-	for i in range(len(subrange.Rows)):
-		for j in range(len(subrange.Columns)):
-			subrange[i,j].Value = (i+1)*(j+2)
-
-
-
-
+	sheets = doc.getSheets()  # ドキュメントからSpreadsheetsを取得。
+	sheet = sheets[0]  # Spreadsheetを取得。
+	sheet.clearContents(VALUE+DATETIME+STRING+ANNOTATION+FORMULA)  # シートの全内容をクリア。
+	sheet[0,:2].setDataArray((('みかん', 'りんご'),))  # 引数は行のセルを要素とするタプルのタプル。
+	cellrange = sheet[1:5,:2]  # SheetCellRangeを取得。
+	cellrange.setDataArray([[(i+1)*(j+2) for j in range(len(cellrange.getColumns()))] for i in range(len(cellrange.getRows()))])  # 引数はタプル以外にリストでもイテレータでもOKだが、シートの範囲と大きさと一致していないといけない。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
